@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Sports Engine</title>
+    <!-- Tailwind CSS CDN for instant styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-800 bg-slate-950 p-4 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-wider text-amber-500">⚡ SPORTS_ENGINE</h1>
+            <div id="engine-status" class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded border border-emerald-500/20">
+                Engine: Active
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto p-4 space-y-6">
+
+        <!-- 💰 MONETIZATION ZONE: TOP BANNER -->
+        <div class="w-full bg-slate-950 border border-dashed border-slate-700 h-24 flex items-center justify-center rounded-lg overflow-hidden">
+            <span class="text-xs text-slate-500 tracking-widest uppercase">[ Programmatic Ad Placement Zone - Banner 728x90 ]</span>
+        </div>
+
+        <!-- Main Live Score Grid -->
+        <section>
+            <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                <span class="animate-ping inline-block w-2 h-2 rounded-full bg-rose-500"></span>
+                Live NBA Matchups Today
+            </h2>
+            
+            <div id="scores-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Loading State / Shimmer Placeholder -->
+                <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl animate-pulse flex flex-col justify-between h-40">
+                    <div class="h-4 bg-slate-800 rounded w-1/3"></div>
+                    <div class="space-y-2">
+                        <div class="h-6 bg-slate-800 rounded"></div>
+                        <div class="h-6 bg-slate-800 rounded"></div>
+                    </div>
+                    <div class="h-3 bg-slate-800 rounded w-1/4"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 💰 MONETIZATION ZONE: MIDGRID SPONSOR -->
+        <div class="w-full bg-slate-950 border border-slate-800 p-4 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <span class="text-xs font-bold text-amber-500 uppercase tracking-wider">Premium Tool Integration</span>
+                <p class="text-sm text-slate-400">Looking for deeper sports data analytics and real-time algorithmic tools?</p>
+            </div>
+            <a href="#" target="_blank" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded text-sm whitespace-nowrap transition">
+                Access Advanced Metrics →
+            </a>
+        </div>
+
+    </main>
+
+    <script>
+        // Replace this with your actual Render web service live URL string
+        const BACKEND_URL = 'https://YOUR-PROJECT-NAME.onrender.com'; 
+
+        async function fetchLiveScores() {
+            const container = document.getElementById('scores-container');
+            
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/live-games`);
+                const result = await response.json();
+                
+                // If no games are found or data array is empty
+                if (!result.data || result.data.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full bg-slate-950 border border-slate-800 p-8 text-center rounded-xl text-slate-400">
+                            No games scheduled for today. Check back during live windows!
+                        </div>`;
+                    return;
+                }
+
+                // Map out the live data cards dynamically
+                container.innerHTML = result.data.map(game => {
+                    const isLive = game.status === "Live" || game.period > 0;
+                    return `
+                        <div class="bg-slate-950 border ${isLive ? 'border-rose-500/30' : 'border-slate-800'} p-4 rounded-xl flex flex-col justify-between space-y-4 hover:border-slate-700 transition">
+                            <div class="flex justify-between text-xs text-slate-400 font-medium">
+                                <span>${game.time || 'Scheduled'}</span>
+                                <span class="${isLive ? 'text-rose-400 font-bold' : ''}">${game.status}</span>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold">${game.home_team.full_name}</span>
+                                    <span class="text-lg font-bold ${isLive ? 'text-amber-400' : 'text-slate-400'}">${game.home_team_score}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold">${game.visitor_team.full_name}</span>
+                                    <span class="text-lg font-bold ${isLive ? 'text-amber-400' : 'text-slate-400'}">${game.visitor_team_score}</span>
+                                </div>
+                            </div>
+                            <div class="pt-2 border-t border-slate-900 flex justify-between items-center text-xs text-slate-500">
+                                <span>Period: ${game.period || 'N/A'}</span>
+                                <!-- Affiliate trigger row hook -->
+                                <a href="#" class="text-amber-500 hover:underline">View Matchup Stats</a>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error("Dashboard Fetch Error:", error);
+                container.innerHTML = `
+                    <div class="col-span-full bg-rose-950/20 border border-rose-900/30 p-8 text-center rounded-xl text-rose-400 text-sm">
+                        Failed to load real-time analytics stream. Re-attempting handshake...
+                    </div>`;
+            }
+        }
+
+        // Run data pipeline on initialization
+        fetchLiveScores();
+        // Quietly poll the backend proxy server once every 60 seconds to refresh UI
+        setInterval(fetchLiveScores, 60000);
+    </script>
+</body>
+</html>
